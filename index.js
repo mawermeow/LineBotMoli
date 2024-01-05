@@ -1,19 +1,10 @@
-import express from 'express';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import linebot from 'linebot';
-import { MessagePool, addNewUser, getUserMessagePool, clearUserMessage } from './messagePool.js';
-import openai from './openai.js';
-
-dotenv.config(); // 加载 .env 文件
-dotenv.config({ path: '.env.local' }); // 加载 .env.local 文件
-
-const app = express();
-
-// 這裡使用 bodyParser 中間件來解析來自 Line 的 Webhook 請求體
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+dotenv.config();
+dotenv.config({ path: '.env.local' });
+import fs from "fs";
+import linebot from "linebot";
+import { MessagePool, addNewUser, getUserMessagePool, clearUserMessage } from "./messagePool.js";
+import openai from "./openai.js"
 
 var bot = linebot({
   channelId: process.env.LINEBOT_CHANNEL_ID,
@@ -110,28 +101,6 @@ bot.on('message', function(event) {
   }
 });
 
-app.post('/linewebhook', (req, res) => {
-  // 確保這是 Line Platform 發出的請求
-  if (req.headers['x-line-signature']) {
-    bot.parser()(req, res, (err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).end();
-      } else {
-        res.status(200).end();
-      }
-    });
-  } else {
-    res.status(403).end();
-  }
+bot.listen('/linewebhook', 3000, function() {
+  console.log('[BOT已準備就緒]');
 });
-
-// Express 監聽的端口
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`[BOT已準備就緒，監聽於端口 ${PORT}]`);
-});
-
-// bot.listen('/linewebhook', 3000, function() {
-//   console.log('[BOT已準備就緒]');
-// });
